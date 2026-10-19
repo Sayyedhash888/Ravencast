@@ -1,0 +1,4 @@
+# Cloudflare Pages configuration
+name = "ravenshold"
+compatibility_date = "2026-10-18"
+pages_build_output_dir = "dist"

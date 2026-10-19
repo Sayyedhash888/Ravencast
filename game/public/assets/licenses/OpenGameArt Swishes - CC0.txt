@@ -1,0 +1,11 @@
+Swishes Sound Pack
+Source: https://opengameart.org/content/swishes-sound-pack
+License: Creative Commons Zero (CC0 1.0)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+13 swish sound effects (4 lighter, 9 heavier) created for the FOSS RPG
+Summoning Wars.
+
+Used in this project for swing_1.mp3, swing_2.mp3 and swing_3.mp3,
+encoded from swish-2.wav, swish-3.wav and swish-9.wav
+(128 kbps MP3).
