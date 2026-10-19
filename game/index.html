@@ -1,13 +1,199 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/tode.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Game</title>
-  </head>
-  <body>
-   <canvas class="game"></canvas>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Ravenshold — Guild of the Wildwood</title>
+<link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+<canvas id="viewport"></canvas>
+
+<!-- full screen colour flashes: damage, healing, area transitions -->
+<div id="vignette"></div>
+<div id="flash"></div>
+<div id="fade"></div>
+
+<!-- world-space damage numbers get projected into here -->
+<div id="floaters"></div>
+
+<!-- touch controls: left stick, right ABXY, drag the canvas to look -->
+<div id="touch" class="touch-layer hidden">
+  <div id="stick" class="stick" aria-label="Move">
+    <div id="stick-knob" class="stick-knob"></div>
+  </div>
+
+  <div class="touch-pad">
+    <button class="tbtn btn-y" data-tap="KeyF" aria-label="Heavy attack">Y</button>
+    <button class="tbtn btn-x" data-hold="attack" aria-label="Attack">X</button>
+    <button class="tbtn btn-b" data-hold="guard" aria-label="Guard">B</button>
+    <button class="tbtn btn-a" data-tap="Space" aria-label="Dodge">A</button>
+  </div>
+
+  <div class="touch-meta">
+    <button class="tbtn small" data-tap="KeyE" aria-label="Interact">E</button>
+    <button class="tbtn small" data-tap="KeyM" aria-label="Map">M</button>
+    <button class="tbtn small" data-tap="Escape" aria-label="Pause">II</button>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="place-block">
+      <span class="label">Region</span>
+      <span id="region-name">Ravenshold</span>
+    </div>
+
+    <div id="wave-banner" class="wave-banner"></div>
+
+    <div class="score-block">
+      <div class="score-row"><span class="label">Gold</span><span id="gold">0</span></div>
+      <div class="score-row small"><span class="label">Level</span><span id="level">1</span></div>
+      <div class="score-row small"><span class="label">Slain</span><span id="kills">0</span></div>
+    </div>
+  </div>
+
+  <div id="tracker" class="tracker hidden">
+    <div class="tracker-head"><span class="label">Contract</span></div>
+    <div id="tracker-title" class="tracker-title"></div>
+    <div id="tracker-body" class="tracker-body"></div>
+  </div>
+
+  <div id="guide" class="guide hidden">
+    <span id="guide-arrow" class="guide-arrow">▲</span>
+    <span id="guide-label" class="guide-label">Guild hall</span>
+    <span id="guide-dist" class="guide-dist">0 m</span>
+  </div>
+
+  <div id="prompt" class="prompt hidden"><kbd>E</kbd><span id="prompt-text"></span></div>
+
+  <div class="hud-bottom">
+    <div class="vitals">
+      <div class="bar bar-health">
+        <div id="health-ghost" class="bar-ghost"></div>
+        <div id="health-fill" class="bar-fill"></div>
+        <span id="health-text" class="bar-text">100 / 100</span>
+      </div>
+      <div class="bar bar-stamina">
+        <div id="stamina-fill" class="bar-fill"></div>
+        <span class="bar-text">STAMINA</span>
+      </div>
+      <div class="equip">
+        <span id="equip-weapon">Bronze Shortsword</span>
+        <span class="dot">·</span>
+        <span id="equip-shield">No Shield</span>
+      </div>
+    </div>
+
+    <div id="combo" class="combo hidden">
+      <span id="combo-count">x2</span>
+      <span class="combo-label">combo</span>
+    </div>
+
+    <div class="controls">
+      <span><kbd>WASD</kbd> move</span>
+      <span><kbd>Shift</kbd>/<kbd>2×W</kbd> sprint</span>
+      <span><kbd>Space</kbd> dodge</span>
+      <span><kbd>LMB</kbd> attack</span>
+      <span><kbd>F</kbd> heavy</span>
+      <span><kbd>RMB</kbd> guard</span>
+      <span><kbd>E</kbd> interact</span>
+      <span><kbd>M</kbd> map</span>
+      <span><kbd>Esc</kbd> pause</span>
+    </div>
+  </div>
+
+  <div id="lockon" class="lockon hidden"></div>
+</div>
+
+<!-- ------------------------------------------------------------ dialogue -->
+<div id="dialogue" class="dialogue hidden">
+  <div class="dialogue-speaker" id="dialogue-speaker"></div>
+  <div class="dialogue-text" id="dialogue-text"></div>
+  <div class="dialogue-input hidden" id="dialogue-input">
+    <label id="dialogue-label" for="dialogue-field"></label>
+    <div class="input-row">
+      <input id="dialogue-field" type="text" maxlength="18" autocomplete="off" spellcheck="false" />
+      <button id="dialogue-submit" class="primary inline">Confirm</button>
+    </div>
+  </div>
+  <div class="dialogue-hint" id="dialogue-hint"><kbd>E</kbd> / <kbd>Space</kbd> continue <span class="sep">·</span> <kbd>Esc</kbd> skip</div>
+</div>
+
+<!-- --------------------------------------------------------------- panels -->
+<div id="panel" class="screen hidden">
+  <div class="panel-box">
+    <h2 id="panel-title">Mission board</h2>
+    <p id="panel-sub" class="tagline"></p>
+    <div id="panel-body" class="panel-body"></div>
+    <button id="panel-close" class="ghost">Close</button>
+  </div>
+</div>
+
+<!-- --------------------------------------------------------------- map -->
+<div id="map-screen" class="screen hidden">
+  <div class="panel-box wide">
+    <h2>Ravenshold &amp; the wilds</h2>
+    <p class="tagline" id="map-sub">Click a waystone to travel</p>
+    <div class="map-wrap">
+      <canvas id="map-canvas" width="640" height="640"></canvas>
+      <div id="map-markers"></div>
+    </div>
+    <button id="map-close" class="ghost">Close</button>
+  </div>
+</div>
+
+<!-- -------------------------------------------------------------- title -->
+<div id="screen-title" class="screen">
+  <div class="panel-box">
+    <h1>Ravenshold<span>Guild of the Wildwood</span></h1>
+    <p class="tagline">Register. Take a contract. Come back breathing.</p>
+    <ul class="briefing">
+      <li><b>Register</b> at the guild hall in the city square</li>
+      <li><b>Take a contract</b> for one of the three wilds</li>
+      <li><b>Spend the pay</b> on steel, shields and training</li>
+    </ul>
+    <button id="btn-start" class="primary">Begin</button>
+    <p class="hint">Click to capture the mouse. <kbd>Esc</kbd> releases it.</p>
+  </div>
+</div>
+
+<div id="screen-pause" class="screen hidden">
+  <div class="panel-box">
+    <h2>Paused</h2>
+    <div id="pause-stats" class="stats"></div>
+    <button id="btn-resume" class="primary">Resume</button>
+    <button id="btn-saves" class="ghost">Save / Load</button>
+    <div class="quality">
+      <span class="label">Graphics</span>
+      <div class="quality-row">
+        <button class="ghost quality-btn" data-quality="low">Low</button>
+        <button class="ghost quality-btn" data-quality="medium">Medium</button>
+        <button class="ghost quality-btn" data-quality="high">High</button>
+      </div>
+    </div>
+    <button id="btn-invert" class="ghost">Mouse look: normal</button>
+    <button id="btn-quit" class="ghost">Abandon run</button>
+  </div>
+</div>
+
+<div id="screen-over" class="screen hidden">
+  <div class="panel-box">
+    <h2 id="over-title">You fell</h2>
+    <p id="over-sub" class="tagline"></p>
+    <div id="over-stats" class="stats"></div>
+    <button id="btn-again" class="primary">Fight again</button>
+  </div>
+</div>
+
+<div id="loader">
+  <div class="loader-inner">
+    <div class="loader-title">Ravenshold</div>
+    <div class="loader-bar"><div id="loader-fill"></div></div>
+    <div id="loader-text">Raising the walls…</div>
+  </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
 </html>
