@@ -1,7 +1,9 @@
 # Ravenshold — Guild of the Wildwood
 ### JetBrains Academy: Build a Game with an AI Coding Agent Challenge
 
-[![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Live Demo](https://img.shields.io/badge/Live_Demo-Cloudflare_Workers-F38020?style=flat&logo=cloudflare)](https://ravenhold.sayyedhash88.workers.dev/)
+
+**Live Game Link:** [https://ravenhold.sayyedhash88.workers.dev/](https://ravenhold.sayyedhash88.workers.dev/)
 
 A third-person open-world action-RPG built with [Three.js](https://threejs.org/) and [Vite](https://vitejs.dev/), progressively evolved from the JetBrains Academy course starter into a fully featured 3D survival arena and guild contracts game.
 
