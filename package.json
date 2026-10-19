@@ -21,6 +21,9 @@
   },
   "type": "module",
   "scripts": {
+    "dev": "npm --prefix game run dev",
+    "build": "npm --prefix game run build",
+    "preview": "npm --prefix game run preview",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
